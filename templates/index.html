@@ -38,7 +38,22 @@
 
 {% block content %}
 
-<canvas id="myChart" width="800" height="400"></canvas>
+<section class="clearfix" id="samples">
+    <div class="list">
+        <h3>A few of your friends</h3>
+        <ul class="friends">{% for friend in friends.data %}
+            <li>
+                <a href="#" onclick="window.open('http://www.facebook.com/{{friend.id}}')">
+                    <img src="https://graph.facebook.com/{{friend.id}}/picture" alt="{{friend.name}}">
+                    {{friend.name}}
+                </a>
+            </li>{% endfor %}</ul>
+    </div>
+</section>
+
+<section class="clearfix">
+    <canvas id="myChart" width="800" height="400"></canvas>
+</section>
 
 <script src="static/bower_components/Chart.js/Chart.js"></script>
 <script type="text/javascript">
@@ -64,6 +79,8 @@
 
     });
 </script>
+
+
 
 {#<section class="clearfix" id="samples">#}
 {#  <h1>Examples of the Facebook Graph API</h1>#}
