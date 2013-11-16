@@ -163,7 +163,10 @@ def get_token():
         return token
 
 
-def get_status_updates_per_hour(statuses):
+def get_status_updates_per_hour(access_token, user_id):
+
+    statuses = fql(
+        "select time, message from status where uid = {}".format(user_id), access_token)
     hours = [datetime.datetime.fromtimestamp(int(s['time'])).hour for s in statuses]
     res = defaultdict(int)
     for h in range(0, 23, 1):
@@ -176,7 +179,6 @@ def get_status_updates_per_hour(statuses):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     # print get_home()
-
 
     access_token = get_token()
     channel_url = url_for('get_channel', _external=True)
@@ -193,10 +195,7 @@ def index():
         POST_TO_WALL = ("https://www.facebook.com/dialog/feed?redirect_uri=%s&"
                         "display=popup&app_id=%s" % (redir, FB_APP_ID))
 
-        statuses = fql(
-            "select time, message from status where uid = me()", access_token)
-
-        status_updates_per_hour = get_status_updates_per_hour(statuses)
+        status_updates_per_hour = get_status_updates_per_hour(access_token, 'me()')
         status_updates_per_hour = ','.join(status_updates_per_hour)
 
         SEND_TO = ('https://www.facebook.com/dialog/send?'
@@ -212,6 +211,11 @@ def index():
             channel_url=channel_url, name=FB_APP_NAME)
     else:
         return render_template('login.html', app_id=FB_APP_ID, token=access_token, url=request.url, channel_url=channel_url, name=FB_APP_NAME)
+
+
+#@app.route('/friend/<friend_id>')
+#def get_friend(friend_id):
+
 
 
 @app.route('/channel.html', methods=['GET', 'POST'])
