@@ -3,11 +3,14 @@
 import base64
 import os
 import os.path
+import sys
 import urllib
 import hmac
 import json
 import hashlib
+import datetime
 from base64 import urlsafe_b64decode, urlsafe_b64encode
+from collections import defaultdict
 
 import requests
 from flask import Flask, request, redirect, render_template, url_for
@@ -144,7 +147,7 @@ def get_token():
         if sig != expected_sig:
             raise ValueError('bad signature')
 
-        code =  data['code']
+        code = data['code']
 
         params = {
             'client_id': FB_APP_ID,
@@ -160,6 +163,16 @@ def get_token():
         return token
 
 
+def get_status_updates_per_hour(statuses):
+    hours = [datetime.datetime.fromtimestamp(int(s['time'])).hour for s in statuses]
+    res = defaultdict(int)
+    for h in range(0, 23, 1):
+        res[h] = 0
+    for h in hours:
+        res[h] += 1
+    return [str(v) for v in res.values()]
+
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     # print get_home()
@@ -173,22 +186,18 @@ def index():
 
         me = fb_call('me', args={'access_token': access_token})
         fb_app = fb_call(FB_APP_ID, args={'access_token': access_token})
-        likes = fb_call('me/likes',
-                        args={'access_token': access_token, 'limit': 4})
-        friends = fb_call('me/friends',
-                          args={'access_token': access_token, 'limit': 4})
-        photos = fb_call('me/photos',
-                         args={'access_token': access_token, 'limit': 16})
+        likes = fb_call('me/likes', args={'access_token': access_token, 'limit': 4})
+        friends = fb_call('me/friends', args={'access_token': access_token, 'limit': 4})
 
         redir = get_home() + 'close/'
         POST_TO_WALL = ("https://www.facebook.com/dialog/feed?redirect_uri=%s&"
                         "display=popup&app_id=%s" % (redir, FB_APP_ID))
 
-        app_friends = fql(
-            "SELECT uid, name, is_app_user, pic_square "
-            "FROM user "
-            "WHERE uid IN (SELECT uid2 FROM friend WHERE uid1 = me()) AND "
-            "  is_app_user = 1", access_token)
+        statuses = fql(
+            "select time, message from status where uid = me()", access_token)
+
+        status_updates_per_hour = get_status_updates_per_hour(statuses)
+        status_updates_per_hour = ','.join(status_updates_per_hour)
 
         SEND_TO = ('https://www.facebook.com/dialog/send?'
                    'redirect_uri=%s&display=popup&app_id=%s&link=%s'
@@ -198,11 +207,12 @@ def index():
 
         return render_template(
             'index.html', app_id=FB_APP_ID, token=access_token, likes=likes,
-            friends=friends, photos=photos, app_friends=app_friends, app=fb_app,
+            friends=friends, status_updates_per_hour=status_updates_per_hour, app=fb_app,
             me=me, POST_TO_WALL=POST_TO_WALL, SEND_TO=SEND_TO, url=url,
             channel_url=channel_url, name=FB_APP_NAME)
     else:
         return render_template('login.html', app_id=FB_APP_ID, token=access_token, url=request.url, channel_url=channel_url, name=FB_APP_NAME)
+
 
 @app.route('/channel.html', methods=['GET', 'POST'])
 def get_channel():
