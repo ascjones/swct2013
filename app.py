@@ -214,7 +214,7 @@ def close():
     return render_template('close.html')
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 5555))
     if app.config.get('FB_APP_ID') and app.config.get('FB_APP_SECRET'):
         app.run(host='0.0.0.0', port=port)
     else:
