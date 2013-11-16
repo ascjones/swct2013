@@ -213,8 +213,15 @@ def index():
         return render_template('login.html', app_id=FB_APP_ID, token=access_token, url=request.url, channel_url=channel_url, name=FB_APP_NAME)
 
 
-#@app.route('/friend/<friend_id>')
-#def get_friend(friend_id):
+@app.route('/friend/<friend_id>')
+def get_friend(friend_id):
+    access_token = get_token()
+
+    if access_token:
+        status_updates_per_hour = get_status_updates_per_hour(access_token, friend_id)
+        return json.dumps(status_updates_per_hour)
+    else:
+        raise Exception('Not authenticated')
 
 
 

@@ -43,7 +43,7 @@
         <h3>A few of your friends</h3>
         <ul class="friends">{% for friend in friends.data %}
             <li>
-                <a href="#" onclick="window.open('http://www.facebook.com/{{friend.id}}')">
+                <a href="#" onclick="show_friend({{friend.id}})">
                     <img src="https://graph.facebook.com/{{friend.id}}/picture" alt="{{friend.name}}">
                     {{friend.name}}
                 </a>
@@ -57,6 +57,7 @@
 
 <script src="static/bower_components/Chart.js/Chart.js"></script>
 <script type="text/javascript">
+
     $(function() {
         //Get context with jQuery - using jQuery's .get() method.
         var ctx = $("#myChart").get(0).getContext("2d");
@@ -73,6 +74,24 @@
         var myNewChart = new Chart(ctx).Bar(data);
 
     });
+
+    show_friend = function(friendId) {
+        $.ajax("/friend/" + friendId)
+                .done(function(data) {
+                     var ctx = $("#myChart").get(0).getContext("2d");
+                    var data = {
+                        labels : ["1am","2am","3am","4am","5am","6am","7am", "8am", "9am", "10am", "11am", "12am", "1pm", "2pm", "3pm", "4pm", "5pm", "6pm", "7pm", "8pm", "9pm", "10pm", "11pm", "12am"],
+                        datasets : [
+                            {
+                                fillColor : "rgba(220,220,220,0.5)",
+                                strokeColor : "rgba(220,220,220,1)",
+                                data : data
+                            }
+                        ]
+                    };
+                    var myNewChart = new Chart(ctx).Bar(data);
+                })
+    }
 </script>
 
 
