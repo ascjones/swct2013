@@ -10,7 +10,6 @@
   <div>
     <h1>Welcome, <strong>{{me.name}}</strong></h1>
     <p class="tagline">
-      This is your app
       <a href="{{app.link}}">{{app.name}}</a>
     </p>
     <div id="share-app">
@@ -38,53 +37,85 @@
 {% endblock %}
 
 {% block content %}
-<section class="clearfix" id="samples">
-      <h1>Examples of the Facebook Graph API</h1>
-      <div class="list">
-        <h3>A few of your friends</h3>
-        <ul class="friends">{% for friend in friends.data %}
-        <li>
-          <a href="#" onclick="window.open('http://www.facebook.com/{{friend.id}}')">
-            <img src="https://graph.facebook.com/{{friend.id}}/picture" alt="{{friend.name}}">
-            {{friend.name}}
-          </a>
-        </li>{% endfor %}</ul>
-      </div>
-      <div class="list inline">
-        <h3>Recent photos</h3>
-        <ul class="photos">
-          {% for photo in photos.data %}
-            {% if loop.index0%4 == 0 %}
-          <li class="first-column" style="background-image: url({{photo.picture}})">
-            {% else %}
-          <li style="background-image: url({{photo.picture}})">
-            {% endif %}
-            <a href="#" onclick="window.open('http://www.facebook.com/{{photo.id}}')">
-              {{photo.name}}
-            </a>
-          </li>
-          {% endfor %}
-        </ul>
-      </div>
-      <div class="list">
-        <h3>Things you like</h3>
-        <ul class="things">{% for like in likes.data %}
-        <li>
-          <a href="#" onclick="window.open('http://www.facebook.com/{{like.id}}')">
-            <img src="https://graph.facebook.com/{{like.id}}/picture?type=square" alt="{{like.name}}">
-            {{like.name}}
-          </a>
-        </li>{% endfor %}</ul>
-      </div>
-      <div class="list">
-        <h3>Friends using this app</h3>
-        <ul class="friends">{% for friend in app_friends %}
-        <li>
-          <a href="#" onclick="window.open('http://www.facebook.com/{{friend.uid}}')">
-            <img src="https://graph.facebook.com/{{friend.uid}}/picture?type=square" alt="{{friend.name}}">
-            {{friend.name}}
-            </a>
-        </li>{% endfor %}</ul>
-      </div>
-    </section>
+
+<canvas id="myChart" width="400" height="400"></canvas>
+
+<script src="static/bower_components/Chart.js/Chart.js"></script>
+<script type="text/javascript">
+    $(function() {
+        //Get context with jQuery - using jQuery's .get() method.
+        var ctx = $("#myChart").get(0).getContext("2d");
+        var data = {
+            labels : ["January","February","March","April","May","June","July"],
+            datasets : [
+                {
+                    fillColor : "rgba(220,220,220,0.5)",
+                    strokeColor : "rgba(220,220,220,1)",
+                    pointColor : "rgba(220,220,220,1)",
+                    pointStrokeColor : "#fff",
+                    data : [65,59,90,81,56,55,40]
+                },
+                {
+                    fillColor : "rgba(151,187,205,0.5)",
+                    strokeColor : "rgba(151,187,205,1)",
+                    pointColor : "rgba(151,187,205,1)",
+                    pointStrokeColor : "#fff",
+                    data : [28,48,40,19,96,27,100]
+                }
+            ]
+        }
+        var myNewChart = new Chart(ctx).Line(data);
+    });
+</script>
+
+{#<section class="clearfix" id="samples">#}
+{#  <h1>Examples of the Facebook Graph API</h1>#}
+{#  <div class="list">#}
+{#    <h3>A few of your friends</h3>#}
+{#    <ul class="friends">{% for friend in friends.data %}#}
+{#    <li>#}
+{#      <a href="#" onclick="window.open('http://www.facebook.com/{{friend.id}}')">#}
+{#        <img src="https://graph.facebook.com/{{friend.id}}/picture" alt="{{friend.name}}">#}
+{#        {{friend.name}}#}
+{#      </a>#}
+{#    </li>{% endfor %}</ul>#}
+{#  </div>#}
+{#  <div class="list inline">#}
+{#    <h3>Recent photos</h3>#}
+{#    <ul class="photos">#}
+{#      {% for photo in photos.data %}#}
+{#        {% if loop.index0%4 == 0 %}#}
+{#      <li class="first-column" style="background-image: url({{photo.picture}})">#}
+{#        {% else %}#}
+{#      <li style="background-image: url({{photo.picture}})">#}
+{#        {% endif %}#}
+{#        <a href="#" onclick="window.open('http://www.facebook.com/{{photo.id}}')">#}
+{#          {{photo.name}}#}
+{#        </a>#}
+{#      </li>#}
+{#      {% endfor %}#}
+{#    </ul>#}
+{#  </div>#}
+{#  <div class="list">#}
+{#    <h3>Things you like</h3>#}
+{#    <ul class="things">{% for like in likes.data %}#}
+{#    <li>#}
+{#      <a href="#" onclick="window.open('http://www.facebook.com/{{like.id}}')">#}
+{#        <img src="https://graph.facebook.com/{{like.id}}/picture?type=square" alt="{{like.name}}">#}
+{#        {{like.name}}#}
+{#      </a>#}
+{#    </li>{% endfor %}</ul>#}
+{#  </div>#}
+{#  <div class="list">#}
+{#    <h3>Friends using this app</h3>#}
+{#    <ul class="friends">{% for friend in app_friends %}#}
+{#    <li>#}
+{#      <a href="#" onclick="window.open('http://www.facebook.com/{{friend.uid}}')">#}
+{#        <img src="https://graph.facebook.com/{{friend.uid}}/picture?type=square" alt="{{friend.name}}">#}
+{#        {{friend.name}}#}
+{#        </a>#}
+{#    </li>{% endfor %}</ul>#}
+{#  </div>#}
+{#</section>#}
+
 {% endblock%}
