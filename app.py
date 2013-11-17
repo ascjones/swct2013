@@ -11,14 +11,12 @@ import requests
 import oauth
 import facebookapi
 
-from flask import Flask, request, render_template, url_for
-
+from flask import Flask, request, render_template, url_for, jsonify
 
 FB_APP_ID = os.environ.get('FACEBOOK_APP_ID')
 app_url = 'https://graph.facebook.com/{0}'.format(FB_APP_ID)
 FB_APP_NAME = json.loads(requests.get(app_url).content).get('name')
 FB_APP_SECRET = os.environ.get('FACEBOOK_SECRET')
-
 
 
 app = Flask(__name__)
@@ -42,7 +40,7 @@ def get_status_updates_per_hour(access_token, user_id):
         res[h] = 0
     for h in hours:
         res[h] += 1
-    return [str(v) for v in res.values()]
+    return res.values()
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -67,7 +65,7 @@ def index():
                         "display=popup&app_id=%s" % (redir, FB_APP_ID))
 
         status_updates_per_hour = get_status_updates_per_hour(access_token, 'me()')
-        status_updates_per_hour = ','.join(status_updates_per_hour)
+        status_updates_per_hour = ','.join([str(x) for x in status_updates_per_hour])
 
         SEND_TO = ('https://www.facebook.com/dialog/send?'
                    'redirect_uri=%s&display=popup&app_id=%s&link=%s'
@@ -76,7 +74,7 @@ def index():
         url = request.url
 
         return render_template(
-            'index.html', app_id=FB_APP_ID, token=access_token, likes=likes,
+            'index.html', app_id=FB_APP_ID, token=access_token[0], likes=likes,
             friends=friends, status_updates_per_hour=status_updates_per_hour, app=fb_app,
             me=me, POST_TO_WALL=POST_TO_WALL, SEND_TO=SEND_TO, url=url,
             channel_url=channel_url, name=FB_APP_NAME)
@@ -86,12 +84,11 @@ def index():
 
 @app.route('/friend/<friend_id>')
 def get_friend(friend_id):
-    fb_oauth = oauth.FacebookOAuth(app, get_home())
-    access_token = fb_oauth.get_token(request, FB_APP_ID, FB_APP_SECRET)
+    access_token = request.args.get('access_token')
 
     if access_token:
         status_updates_per_hour = get_status_updates_per_hour(access_token, friend_id)
-        return json.dumps(status_updates_per_hour)
+        return jsonify({'statuses': status_updates_per_hour})
     else:
         raise Exception('Not authenticated')
 
