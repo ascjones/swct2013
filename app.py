@@ -7,7 +7,8 @@ from collections import defaultdict
 import os
 import os.path
 import requests
-
+import string
+import re
 import oauth
 import facebookapi
 
@@ -30,10 +31,7 @@ def get_home():
     return 'https://' + request.host + '/'
 
 
-def get_status_updates_per_hour(access_token, user_id):
-
-    statuses = fb.fql(
-        "select time, message from status where uid = {}".format(user_id), access_token)
+def get_status_updates_per_hour(statuses):
     hours = [datetime.datetime.fromtimestamp(int(s['time'])).hour for s in statuses]
     res = defaultdict(int)
     for h in range(0, 23, 1):
@@ -41,6 +39,32 @@ def get_status_updates_per_hour(access_token, user_id):
     for h in hours:
         res[h] += 1
     return res.values()
+
+
+stop_words = re.compile("^(i|me|my|myself|we|us|our|ours|ourselves|you|your|yours|yourself|yourselves|he|him|his|himself|she|her|hers|herself|it|its|itself|they|them|their|theirs|themselves|what|which|who|whom|whose|this|that|these|those|am|is|are|was|were|be|been|being|have|has|had|having|do|does|did|doing|will|would|should|can|could|ought|i'm|you're|he's|she's|it's|we're|they're|i've|you've|we've|they've|i'd|you'd|he'd|she'd|we'd|they'd|i'll|you'll|he'll|she'll|we'll|they'll|isn't|aren't|wasn't|weren't|hasn't|haven't|hadn't|doesn't|don't|didn't|won't|wouldn't|shan't|shouldn't|can't|cannot|couldn't|mustn't|let's|that's|who's|what's|here's|there's|when's|where's|why's|how's|a|an|the|and|but|if|or|because|as|until|while|of|at|by|for|with|about|against|between|into|through|during|before|after|above|below|to|from|up|upon|down|in|out|on|off|over|under|again|further|then|once|here|there|when|where|why|how|all|any|both|each|few|more|most|other|some|such|no|nor|not|only|own|same|so|than|too|very|say|says|said|shall)", re.IGNORECASE)
+
+
+def get_status_words(statuses):
+    words = {}
+    for status in statuses:
+        for word in status['message'].split():
+            stripped = word.translate(string.punctuation)
+            if stripped not in words:
+                words[stripped] = 1
+            if not stop_words.match(word):
+                words[stripped] += 1
+    return [(word, count) for word, count in words.items() if count > 1]
+
+
+def get_statuses_data(access_token, user_id):
+    statuses = fb.fql(
+        "select time, message from status where uid = {}".format(user_id), access_token)
+    status_updates_per_hour = get_status_updates_per_hour(statuses)
+    status_word_counts = [{'text': k, 'size': v} for k, v in get_status_words(statuses)]
+    return {
+        'updates_per_hour': status_updates_per_hour,
+        'word_counts': status_word_counts
+    }
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -64,8 +88,9 @@ def index():
         POST_TO_WALL = ("https://www.facebook.com/dialog/feed?redirect_uri=%s&"
                         "display=popup&app_id=%s" % (redir, FB_APP_ID))
 
-        status_updates_per_hour = get_status_updates_per_hour(access_token, 'me()')
-        status_updates_per_hour = ','.join([str(x) for x in status_updates_per_hour])
+        status_data = get_statuses_data(access_token, 'me()')
+        status_updates_per_hour = ','.join([str(x) for x in status_data['updates_per_hour']])
+        #status_words = ','.join("\{ for word, count in status_data['word_counts'])
 
         SEND_TO = ('https://www.facebook.com/dialog/send?'
                    'redirect_uri=%s&display=popup&app_id=%s&link=%s'
@@ -87,8 +112,8 @@ def get_friend(friend_id):
     access_token = request.args.get('access_token')
 
     if access_token:
-        status_updates_per_hour = get_status_updates_per_hour(access_token, friend_id)
-        return jsonify({'statuses': status_updates_per_hour})
+        status_data = get_statuses_data(access_token, friend_id)
+        return jsonify(status_data)
     else:
         raise Exception('Not authenticated')
 
