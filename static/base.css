@@ -69,7 +69,7 @@ header .tagline {
 
 #share-app {
   float: right;
-  width: 344px;
+  width: 360px;
 }
 
 #share-app ul {
@@ -356,4 +356,32 @@ header .tagline {
 
 .clearfix {
   zoom: 1;
+}
+
+/* ------------------------------------------ */
+
+/* =chart
+--------------------------------------------- */
+#chart {
+  border-left: 1px solid #b3b3b3;
+  border-right: 1px solid #b3b3b3;
+  border-top: 1px solid #fff;
+}
+
+#chart h3 {
+  color: #646464;
+  font-weight: bold;
+  font-size: 14px;
+  line-height: 29px;
+  text-align: center;
+}
+
+
+/* ------------------------------------------ */
+
+/* =chart
+--------------------------------------------- */
+#friendsList {
+float: right;
+width: 200px;
 }
