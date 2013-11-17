@@ -7,7 +7,10 @@ from collections import defaultdict
 import os
 import os.path
 import requests
+
 import oauth
+import facebookapi
+
 from flask import Flask, request, render_template, url_for
 
 
@@ -17,26 +20,12 @@ FB_APP_NAME = json.loads(requests.get(app_url).content).get('name')
 FB_APP_SECRET = os.environ.get('FACEBOOK_SECRET')
 
 
-def fql(fql, token, args=None):
-    if not args:
-        args = {}
-
-    args["query"], args["format"], args["access_token"] = fql, "json", token
-
-    url = "https://api.facebook.com/method/fql.query"
-
-    r = requests.get(url, params=args)
-    return json.loads(r.content)
-
-
-def fb_call(call, args=None):
-    url = "https://graph.facebook.com/{0}".format(call)
-    r = requests.get(url, params=args)
-    return json.loads(r.content)
 
 app = Flask(__name__)
 app.config.from_object(__name__)
 app.config.from_object('conf.Config')
+
+fb = facebookapi.FacebookApi()
 
 
 def get_home():
@@ -45,7 +34,7 @@ def get_home():
 
 def get_status_updates_per_hour(access_token, user_id):
 
-    statuses = fql(
+    statuses = fb.fql(
         "select time, message from status where uid = {}".format(user_id), access_token)
     hours = [datetime.datetime.fromtimestamp(int(s['time'])).hour for s in statuses]
     res = defaultdict(int)
@@ -68,10 +57,10 @@ def index():
 
     if access_token:
 
-        me = fb_call('me', args={'access_token': access_token})
-        fb_app = fb_call(FB_APP_ID, args={'access_token': access_token})
-        likes = fb_call('me/likes', args={'access_token': access_token, 'limit': 4})
-        friends = fb_call('me/friends', args={'access_token': access_token, 'limit': 4})
+        me = fb.call('me', args={'access_token': access_token})
+        fb_app = fb.call(FB_APP_ID, args={'access_token': access_token})
+        likes = fb.call('me/likes', args={'access_token': access_token, 'limit': 4})
+        friends = fb.call('me/friends', args={'access_token': access_token, 'limit': 4})
 
         redir = get_home() + 'close/'
         POST_TO_WALL = ("https://www.facebook.com/dialog/feed?redirect_uri=%s&"
